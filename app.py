@@ -155,6 +155,8 @@ async def main():
         @client.event
         async def on_ready():
             print('Bot Connected!')
+            playing_vs_code = discord.Game(name='VS Code')
+            await client.change_presence(activity=playing_vs_code)
 
         @client.command()
         async def p(ctx, *, q):
