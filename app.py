@@ -41,7 +41,8 @@ async def search_youtube(ctx, query, voice_client, guild_id):
         'noplaylist': True,
         'skip_download': True,
         'extract_flat': 'discard_in_playlist',
-        'ignoreerrors': True
+        'ignoreerrors': True,
+        'max_downloads': 5
     }
 
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -174,10 +175,15 @@ async def main():
 
             if q[:5] == 'https':
                 message = await ctx.send('🧿 Memproses Link...')
+                result = await search_youtube(ctx, q, voice_client[ctx.guild.id], ctx.guild.id)
             else:
                 message = await ctx.send('🧿 Mencari...')
 
-            result = await search_youtube(ctx, q, voice_client[ctx.guild.id], ctx.guild.id)
+                query = q.replace(' ', '+')
+                url = f'https://www.youtube.com/results?search_query={query}&sp=EgIQAQ%253D%253D'
+                result = await search_youtube(ctx, url, voice_client[ctx.guild.id], ctx.guild.id)
+
+        
 
             if result['type'] == 'entries':
                 view = MusicSelect(ctx, message, voice_client[ctx.guild.id], ctx.guild.id, result['data'])
