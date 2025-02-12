@@ -241,8 +241,16 @@ async def main():
         '''START MAIN PROGRAM'''
         import logging
 
-        handler = logging.FileHandler(filename='discord.log', encoding='utf-8', mode='w')
-        discord.utils.setup_logging(level=logging.INFO, handler=handler, root=False)
+        logging.basicConfig(level=logging.INFO)
+        logger = logging.getLogger('discord')
+        logger.setLevel(logging.DEBUG)
+
+        console_handler = logging.StreamHandler()
+        console_handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
+        logger.addHandler(console_handler)
+
+        '''handler = logging.FileHandler(filename='discord.log', encoding='utf-8', mode='w')
+        discord.utils.setup_logging(level=logging.INFO, handler=handler, root=False)'''
 
         await client.start(BOT_TOKEN)
 
