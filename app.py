@@ -15,10 +15,11 @@ def loads():
     global voice_client, music_url_object, playing, cookie, BOT_TOKEN
 
     BOT_TOKEN = os.environ.get('BOT_TOKEN')
-    COOKIE_BYTE64 = os.environ.get('cookie')
+    COOKIE_BASE64 = os.environ.get('cookie')
 
-    cookie_ascii = COOKIE_BYTE64.encode('ascii')
-    cookie_string = base64.b64decode(cookie_ascii)
+    cookie_ascii = COOKIE_BASE64.encode('ascii')
+    cookie_base64_decoded = base64.b64decode(cookie_ascii)
+    cookie_string = cookie_base64_decoded.decode('ascii')
 
     with open('cookie.txt', 'w') as f:
         f.write(cookie_string)
