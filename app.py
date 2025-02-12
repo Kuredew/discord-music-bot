@@ -1,6 +1,8 @@
 '''KUREICHI DEV SINCE 2024'''
 
+import ctypes.util
 import os
+import ctypes
 import base64
 import yt_dlp
 import asyncio
@@ -21,7 +23,9 @@ def loads():
     cookie_base64_decoded = base64.b64decode(cookie_ascii)
     cookie_string = cookie_base64_decoded.decode('ascii')
 
-    
+    opus = ctypes.util.find_library('opus')
+    if not discord.opus.is_loaded():
+        discord.opus.load_opus(opus)
 
     with open('cookie.txt', 'w') as f:
         f.write(cookie_string)
