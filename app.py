@@ -1,6 +1,5 @@
 '''KUREICHI DEV SINCE 2024'''
 
-import ctypes.util
 import os
 import ctypes
 import base64
@@ -22,11 +21,6 @@ def loads():
     cookie_ascii = COOKIE_BASE64.encode('ascii')
     cookie_base64_decoded = base64.b64decode(cookie_ascii)
     cookie_string = cookie_base64_decoded.decode('ascii')
-
-    opus = ctypes.util.find_library('libopus0')
-    print(opus)
-    if not discord.opus.is_loaded():
-        discord.opus.load_opus(opus)
 
     with open('cookie.txt', 'w') as f:
         f.write(cookie_string)
@@ -149,7 +143,7 @@ async def play_music(ctx, voice_client, guild_id):
         url = obj['url']
 
         await ctx.send(f'🎶 **Memutar** {title}')
-        voice_client[guild_id].play(discord.FFmpegPCMAudio(url), after=lambda e: asyncio.run_coroutine_threadsafe(play_music(ctx, voice_client, guild_id), client.loop))
+        voice_client[guild_id].play(discord.FFmpegOpusAudio(url), after=lambda e: asyncio.run_coroutine_threadsafe(play_music(ctx, voice_client, guild_id), client.loop))
     else:
         global playing
 
