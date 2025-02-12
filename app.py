@@ -40,7 +40,7 @@ async def search_youtube(ctx, query, voice_client, guild_id):
         'default_search': 'ytsearch5',
         'noplaylist': True,
         'skip_download': True,
-        'extract_flat': True,
+        'extract_flat': 'discard_in_playlist',
         'ignoreerrors': True
     }
 
