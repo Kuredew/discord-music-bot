@@ -1,7 +1,6 @@
 '''KUREICHI DEV SINCE 2024'''
 
 import os
-import ctypes
 import base64
 import yt_dlp
 import asyncio
@@ -39,7 +38,10 @@ async def search_youtube(ctx, query, voice_client, guild_id):
         'cookiefile': cookie,
         'format': 'ba/best',
         'default_search': 'ytsearch5',
-        'noplaylist': True
+        'noplaylist': True,
+        'skip_download': True,
+        'extract_flat': True,
+        'ignoreerrors': True
     }
 
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -144,7 +146,7 @@ async def play_music(ctx, voice_client, guild_id):
         url = obj['url']
 
         await ctx.send(f'🎶 **Memutar** {title}')
-        voice_client[guild_id].play(discord.FFmpegOpusAudio(url), after=lambda e: asyncio.run_coroutine_threadsafe(play_music(ctx, voice_client, guild_id), client.loop))
+        voice_client[guild_id].play(discord.FFmpegPCMAudio(url), after=lambda e: asyncio.run_coroutine_threadsafe(play_music(ctx, voice_client, guild_id), client.loop))
     else:
         global playing
 
@@ -245,7 +247,7 @@ async def main():
 
         logging.basicConfig(level=logging.INFO)
         logger = logging.getLogger('discord')
-        logger.setLevel(logging.DEBUG)
+        logger.setLevel(logging.INFO)
 
         console_handler = logging.StreamHandler()
         console_handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
