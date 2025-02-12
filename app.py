@@ -21,6 +21,9 @@ def loads():
     cookie_base64_decoded = base64.b64decode(cookie_ascii)
     cookie_string = cookie_base64_decoded.decode('ascii')
 
+    if not discord.opus.is_loaded():
+        discord.opus.load_opus("libopus.so.0")
+
     with open('cookie.txt', 'w') as f:
         f.write(cookie_string)
 
