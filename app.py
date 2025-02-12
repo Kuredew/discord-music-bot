@@ -24,6 +24,7 @@ def loads():
     cookie_string = cookie_base64_decoded.decode('ascii')
 
     opus = ctypes.util.find_library('opus')
+    print(opus)
     if not discord.opus.is_loaded():
         discord.opus.load_opus(opus)
 
