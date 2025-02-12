@@ -23,7 +23,7 @@ def loads():
     cookie_base64_decoded = base64.b64decode(cookie_ascii)
     cookie_string = cookie_base64_decoded.decode('ascii')
 
-    opus = ctypes.util.find_library('opus')
+    opus = ctypes.util.find_library('libopus0')
     print(opus)
     if not discord.opus.is_loaded():
         discord.opus.load_opus(opus)
