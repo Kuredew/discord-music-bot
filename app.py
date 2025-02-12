@@ -38,7 +38,8 @@ async def search_youtube(ctx, query, voice_client, guild_id):
     ydl_opts = {
         'cookiefile': cookie,
         'format': 'ba/best',
-        'default_search': 'ytsearch5'
+        'default_search': 'ytsearch5',
+        'noplaylist': True
     }
 
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
