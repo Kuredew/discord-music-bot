@@ -84,7 +84,7 @@ class MusicSelect(discord.ui.View):
         url = 'https://www.youtube.com' + result_selected['url_suffix']
         # url = result_selected['url']
 
-        await interaction.response.edit_message(content=f'🧿 **Memproses** {title}')
+        await interaction.response.edit_message(content=f'🧿 **Memproses** {title}', view=None)
 
         ytdlp_result = await ytdlp(url)
         stream_url = ytdlp_result['data']
