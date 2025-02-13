@@ -3,6 +3,7 @@
 import os
 import base64
 import yt_dlp
+from youtube_search import YoutubeSearch
 import asyncio
 import discord
 from discord.ext import commands
@@ -31,7 +32,7 @@ def loads():
     playing = False
 
 
-async def search_youtube(ctx, query, voice_client, guild_id):
+async def ytdlp(query):
     print(f'Mencari Musik {query}...')
 
     ydl_opts = {
@@ -68,7 +69,7 @@ class MusicSelect(discord.ui.View):
         self.guild_id = guild_id
         self.options = []
         for index, result in enumerate(self.result):
-            query = discord.SelectOption(label=result['title'], value=str(index), description=result['uploader'])
+            query = discord.SelectOption(label=result['title'], value=str(index), description=result['channel'])
             self.options.append(query)
 
 
@@ -81,9 +82,15 @@ class MusicSelect(discord.ui.View):
         result_selected = self.result[index_selected]
 
         title = result_selected['title']
-        url = result_selected['url']
+        url = 'https://www.youtube.com' + result_selected['url_suffix']
+        # url = result_selected['url']
 
-        await initialize_play_music(self.ctx, self.message, self.voice_client, self.guild_id, title, url)
+        await interaction.response.edit_message(content=f'🧿 **Memproses** {title}')
+
+        ytdlp_result = await ytdlp(url)
+        stream_url = ytdlp_result['data']
+
+        await initialize_play_music(self.ctx, self.message, self.voice_client, self.guild_id, title, stream_url)
 
 class DeleteSelect(discord.ui.View):
     def __init__(self, guild_id):
@@ -161,7 +168,7 @@ async def main():
         @client.event
         async def on_ready():
             print('Bot Connected!')
-            playing_vs_code = discord.Game(name='VS Code')
+            playing_vs_code = discord.Game(name='Only Fans')
             await client.change_presence(activity=playing_vs_code)
 
         @client.command()
@@ -175,23 +182,32 @@ async def main():
 
             if q[:5] == 'https':
                 message = await ctx.send('🧿 Memproses Link...')
-                result = await search_youtube(ctx, q, voice_client[ctx.guild.id], ctx.guild.id)
+                result = await ytdlp(ctx, q, voice_client[ctx.guild.id], ctx.guild.id)
+
+                await initialize_play_music(ctx, message, voice_client, ctx.guild.id, result['title'], result['data'])
             else:
                 message = await ctx.send('🧿 Mencari...')
 
-                query = q.replace(' ', '+')
+                search_query = q
+                result_search = YoutubeSearch(search_query, max_results=5).to_dict()
+
+                view = MusicSelect(ctx, message, voice_client[ctx.guild.id], ctx.guild.id, result_search)
+
+                await message.edit(content='✨ Pilih lagunya bang.', view=view)
+
+                '''query = q.replace(' ', '+')
                 url = f'https://www.youtube.com/results?search_query={query}&sp=EgIQAQ%253D%253D'
-                result = await search_youtube(ctx, url, voice_client[ctx.guild.id], ctx.guild.id)
+                result = await search_youtube(ctx, url, voice_client[ctx.guild.id], ctx.guild.id)'''
+                
 
-        
 
-            if result['type'] == 'entries':
-                view = MusicSelect(ctx, message, voice_client[ctx.guild.id], ctx.guild.id, result['data'])
-                await message.edit(content='Pilih lagunya.', view=view)
+        @client.command()
+        async def start_debug(ctx):
+            await ctx.send('Memulai Debug...')
+            await ctx.send('Mengirim query ke variable p')
+            await p(ctx, 'escapism')
+            await ctx.send('Debug Selesai.')
 
-            if result['type'] == 'url':
-                print('Ini terpanggil')
-                await initialize_play_music(ctx, message, voice_client, ctx.guild.id, result['title'], result['data'])
             
 
         @client.command()
