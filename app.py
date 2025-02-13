@@ -60,11 +60,10 @@ async def ytdlp(query):
     
 
 class MusicSelect(discord.ui.View):
-    def __init__(self, ctx, message, voice_client, guild_id, results):
+    def __init__(self, ctx, message, guild_id, results):
         super().__init__()
         self.ctx = ctx
         self.message = message
-        self.voice_client = voice_client
         self.result = results
         self.guild_id = guild_id
         self.options = []
@@ -90,7 +89,7 @@ class MusicSelect(discord.ui.View):
         ytdlp_result = await ytdlp(url)
         stream_url = ytdlp_result['data']
 
-        await initialize_play_music(self.ctx, self.message, self.voice_client, self.guild_id, title, stream_url)
+        await initialize_play_music(self.ctx, self.message, self.guild_id, title, stream_url)
 
 class DeleteSelect(discord.ui.View):
     def __init__(self, guild_id):
@@ -120,7 +119,7 @@ class DeleteSelect(discord.ui.View):
 
 
 
-async def initialize_play_music(ctx, message, voice_client, guild_id, title, url):
+async def initialize_play_music(ctx, message, guild_id, title, url):
     global playing
     print('Menginisialisasi Play Music')
 
@@ -138,13 +137,13 @@ async def initialize_play_music(ctx, message, voice_client, guild_id, title, url
 
     if not playing:
         await message.delete()
-        await play_music(ctx, voice_client, guild_id)
+        await play_music(ctx, guild_id)
         playing = True
     else:
         await message.edit(content=f'📝 **{title}** ditambah kedalam Playlist.', view=None)
 
 
-async def play_music(ctx, voice_client, guild_id):
+async def play_music(ctx, guild_id):
     print('Fungsi Play Music dijalankan')
 
     if len(music_url_object[guild_id]) > 0:
@@ -191,7 +190,7 @@ async def main():
                 search_query = q
                 result_search = YoutubeSearch(search_query, max_results=5).to_dict()
 
-                view = MusicSelect(ctx, message, voice_client[ctx.guild.id], ctx.guild.id, result_search)
+                view = MusicSelect(ctx, message, ctx.guild.id, result_search)
 
                 await message.edit(content='✨ Pilih lagunya bang.', view=view)
 
