@@ -153,7 +153,7 @@ async def play_music(ctx, guild_id):
         url = obj['url']
 
         await ctx.send(f'🎶 **Memutar** {title}')
-        voice_client[guild_id].play(discord.FFmpegPCMAudio(url), after=lambda e: asyncio.run_coroutine_threadsafe(play_music(ctx, voice_client, guild_id), client.loop))
+        voice_client[guild_id].play(discord.FFmpegOpusAudio(url), after=lambda e: asyncio.run_coroutine_threadsafe(play_music(ctx, guild_id), client.loop))
     else:
         global playing
 
@@ -181,9 +181,9 @@ async def main():
 
             if q[:5] == 'https':
                 message = await ctx.send('🧿 Memproses Link...')
-                result = await ytdlp(ctx, q, voice_client[ctx.guild.id], ctx.guild.id)
+                result = await ytdlp(q)
 
-                await initialize_play_music(ctx, message, voice_client, ctx.guild.id, result['title'], result['data'])
+                await initialize_play_music(ctx, message, ctx.guild.id, result['title'], result['data'])
             else:
                 message = await ctx.send('🧿 Mencari...')
 
