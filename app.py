@@ -340,7 +340,7 @@ async def initialize_play_music(ctx, message, guild_id, title, url, edit=True):
 async def play_music(ctx, guild_id):
     if guild_id not in loop_index:
         loop_index[guild_id] = 0
-        is_loop[guild_id]
+        is_loop[guild_id] = False
 
     print('Fungsi Play Music dijalankan')
 
