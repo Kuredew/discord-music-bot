@@ -269,11 +269,11 @@ class PlaylistSelectPlay(discord.ui.View):
             music = ''
             if len(playlist['music']) > 1:
                 for index, music in enumerate(playlist['music']):
-                    music += f'{music['name']}'
+                    music += f'{music['title']}'
                     if index+1 < len(playlist['music']):
                         music =+ ', '
             else:
-                music = playlist['music'][0]['name']
+                music = playlist['music'][0]['title']
 
             q = discord.SelectOption(label=playlist['playlist_name'], description=music, value=str(index))
 
@@ -575,7 +575,7 @@ async def main():
                 playlist_name = playlist['playlist_name']
                 music_query = ''
                 for music in playlist['music']:
-                    music_query += f'   {music['name']}\n'
+                    music_query += f'   {music['title']}\n'
 
                 query = f'{index+1}. {playlist_name}\n{music_query}'
                 message_query += query
