@@ -162,7 +162,7 @@ class MusicSelectRaw(discord.ui.View):
 
         options = []
         for index, result in enumerate(self.results):
-            options.append(discord.SelectOption(label=f'{index + 1}. {result['title']}', description=result['channel'], value=str(index)))
+            options.append(discord.SelectOption(label=f'{index + 1}. {result['title'][:97]}', description=result['channel'], value=str(index)))
 
         self.select = discord.ui.Select(placeholder='Pilih Musiknya bang', options=options)
         self.select.callback = self.on_select
