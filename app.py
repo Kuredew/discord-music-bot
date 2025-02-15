@@ -266,16 +266,16 @@ class PlaylistSelectPlay(discord.ui.View):
         self.playlist_list = playlist_collection.ListPlaylist()
 
         for index, playlist in enumerate(self.playlist_list):
-            music = ''
+            music_query = ''
             if len(playlist['music']) > 1:
                 for index, music in enumerate(playlist['music']):
-                    music += f'{music['title']}'
+                    music_query += f'{music['title']}'
                     if index+1 < len(playlist['music']):
-                        music =+ ', '
+                        music_query =+ ', '
             else:
-                music = playlist['music'][0]['title']
+                music_query = playlist['music'][0]['title']
 
-            q = discord.SelectOption(label=playlist['playlist_name'], description=music, value=str(index))
+            q = discord.SelectOption(label=playlist['playlist_name'], description=music_query, value=str(index))
 
         self.select = discord.ui.Select(placeholder='Pilh Playlist')
         self.select.callback = self.on_select
@@ -553,7 +553,7 @@ async def main():
                 if ctx.voice_client == None:
                     voice_client[guild_id] = ctx.author.voice.channel.connect()
             else:
-                await message.edit(content='Masuk voice dulu bang, gw gk tau mau join ke mana.')
+                await ctx.send(content='Masuk voice dulu bang, gw gk tau mau join ke mana.')
                 return
             
             view = PlaylistSelectPlay(ctx, guild_id, username)
