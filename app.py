@@ -253,6 +253,59 @@ class PlaylistRemoveSelect(discord.ui.View):
         self.playlist_collections.DeletePlaylist(self.playlist_name)
         await interaction.response.edit_message(content=f'{self.playlist_name} Berhasil di remove dari database', view=None)
 
+class PlaylistSelectPlay(discord.ui.View):
+    def __init__(self, ctx, guild_id, username):
+        super().__init__()
+
+        self.ctx = ctx
+        self.guild_id = guild_id
+        self.username = username
+        self.options = []
+
+        playlist_collection = PlaylistCollection(self.username)
+        self.playlist_list = playlist_collection.ListPlaylist()
+
+        for index, playlist in enumerate(self.playlist_list):
+            music = ''
+            if len(playlist['music']) > 1:
+                for index, music in enumerate(playlist['music']):
+                    music += f'{music['name']}'
+                    if index+1 < len(playlist['music']):
+                        music =+ ', '
+            else:
+                music = playlist['music'][0]['name']
+
+            q = discord.SelectOption(label=playlist['playlist_name'], description=music, value=str(index))
+
+        self.select = discord.ui.Select(placeholder='Pilh Playlist')
+        self.select.callback = self.on_select
+        self.add_item(self.select)
+
+    async def on_select(self, interact: discord.Interaction):
+        playlist_collections = PlaylistCollection(self.username)
+
+        playlist_name = self.playlist_list[int(self.select.values[0])]['playlist_name']
+        music_list = playlist_collections.ListMusic(playlist_name)
+
+        message = await interact.response.send_message(content='🧿 Memproses..\n\n*Karena minimnya resource, ini bakalan memakan waktu sedikit lama. Namun tenang saja, lagu akan tetap dijalankan sambil menunggu proses selesai.*')
+
+        for music in music_list:
+            title = music['title']
+            url = music['url']
+
+            print(f'Memasukkan URL {title} Kedalam playlist utama')
+
+            result = await ytdlp(url)
+            title = result['title']
+            url_stream = result['data']
+
+            await initialize_play_music(self.ctx, message, self.guild_id, title, url_stream)
+
+        
+
+
+
+
 async def initialize_play_music(ctx, message, guild_id, title, url):
     global playing
     print('Menginisialisasi Play Music')
@@ -488,11 +541,10 @@ async def main():
             username = ctx.author.name
             view = PlaylistRemoveSelect(username)
 
-            await ctx.send(content='Pilih playlist yang ingin kamu remove\n*Playlist yang sudah dihapus tidak akan bisa dikembalikan lagi!*', view=view)
+            await ctx.send(content='Pilih playlist yang ingin kamu remove\n\n*Playlist yang sudah dihapus tidak akan bisa dikembalikan lagi!*', view=view)
             
         @client.command()
-        async def playlistplay(ctx, *, playlist_name):
-            message = await ctx.send('🧿 Memproses..\n\n*Karena minimnya resource, ini bakalan memakan waktu sedikit lama. Namun tenang saja, lagu akan tetap dijalankan sambil menunggu proses selesai.*')
+        async def playlistplay(ctx):
 
             username = ctx.author.name
             guild_id = ctx.guild.id
@@ -501,24 +553,11 @@ async def main():
                 if ctx.voice_client == None:
                     voice_client[guild_id] = ctx.author.voice.channel.connect()
             else:
-                await message.edit(content='Oh ya, masuk voice dulu')
+                await message.edit(content='Masuk voice dulu bang, gw gk tau mau join ke mana.')
                 return
-
-            playlist_collections = PlaylistCollection(username)
-
-            music_list = playlist_collections.ListMusic(playlist_name)
-
-            for music in music_list:
-                title = music['title']
-                url = music['url']
-
-                print(f'Memasukkan URL {title} Kedalam playlist utama')
-
-                result = await ytdlp(url)
-                title = result['title']
-                url_stream = result['data']
-
-                await initialize_play_music(ctx, message, guild_id, title, url_stream)
+            
+            view = PlaylistSelectPlay(ctx, guild_id, username)
+            message = await ctx.send(content='📖 Pilih Playlist yang ingin kamu putar', view=view)
 
 
         @client.command()
@@ -534,9 +573,11 @@ async def main():
             playlist_list = playlist_collections.ListPlaylist()
             for index, playlist in enumerate(playlist_list):
                 playlist_name = playlist['playlist_name']
-                music_total = len(playlist['music'])
+                music_query = ''
+                for music in playlist['music']:
+                    music_query += f'   {music['name']}\n'
 
-                query = f'{index+1}. {playlist_name} ({music_total})'
+                query = f'{index+1}. {playlist_name}\n{music_query}'
                 message_query += query
 
             await ctx.send(message_query)
