@@ -30,10 +30,10 @@ def loads():
 
     voice_client = {}
     music_url_object = {}
-    playing = False
+    playing = {}
 
-    is_loop = False
-    loop_index = 0
+    is_loop = {}
+    loop_index = {}
     loop_music_url_object = {}
 
 
@@ -307,7 +307,9 @@ class PlaylistSelectPlay(discord.ui.View):
 
 
 async def initialize_play_music(ctx, message, guild_id, title, url, edit=True):
-    global playing
+    if guild_id not in playing:
+        playing[guild_id] = False
+
     print('Menginisialisasi Play Music')
 
     obj = {
@@ -324,10 +326,10 @@ async def initialize_play_music(ctx, message, guild_id, title, url, edit=True):
     music_url_object[guild_id].append(obj)
     loop_music_url_object[guild_id].append(obj)
 
-    if not playing:
+    if not playing[guild_id]:
         await message.delete()
         await play_music(ctx, guild_id)
-        playing = True
+        playing[guild_id] = True
     else:
         if edit:
             await message.edit(content=f'📝 **{title}** ditambah kedalam Playlist.', view=None)
@@ -336,36 +338,37 @@ async def initialize_play_music(ctx, message, guild_id, title, url, edit=True):
 
 
 async def play_music(ctx, guild_id):
-    global loop_index
+    if guild_id not in loop_index:
+        loop_index[guild_id] = 0
 
     print('Fungsi Play Music dijalankan')
 
-    if not is_loop:
+    if not is_loop[guild_id]:
         if len(music_url_object[guild_id]) > 0:
             obj = music_url_object[guild_id].pop(0)
         else:
-            global playing
 
             await ctx.send('Lagu Habis.')
             music_url_object.pop(guild_id)
+            loop_music_url_object.pop(guild_id)
 
-            loop_index = 0
-            playing = False
+            loop_index[guild_id] = 0
+            playing[guild_id] = False
             return
     else:
         print('Loop Dijalankan')
         try:
-            obj = loop_music_url_object[guild_id][loop_index]
+            obj = loop_music_url_object[guild_id][loop_index[guild_id]]
         except:
-            loop_index = 0
-            obj = loop_music_url_object[guild_id][loop_index]
+            loop_index[guild_id] = 0
+            obj = loop_music_url_object[guild_id][loop_index[guild_id]]
 
     title = obj['title']
     url = obj['url']
 
     await ctx.send(f'🎶 **Memutar** {title}')
     voice_client[guild_id].play(discord.FFmpegOpusAudio(url), after=lambda e: asyncio.run_coroutine_threadsafe(play_music(ctx, guild_id), client.loop))
-    loop_index += 1
+    loop_index[guild_id] += 1
 
     print('Function Play Music Selesai!')
 
@@ -415,14 +418,14 @@ async def main():
 
         @client.command()
         async def loop(ctx):
-            global is_loop
+            guild_id = ctx.guild.id
 
-            if not is_loop:
-                is_loop = True
+            if not is_loop[guild_id]:
+                is_loop[guild_id] = True
 
                 await ctx.send('Loop Berhasil di Aktifkan!')
             else:
-                is_loop = False
+                is_loop[guild_id] = False
 
                 await ctx.send('Loop Berhasil di Nonaktifkan')
                 
@@ -478,7 +481,7 @@ async def main():
             except:
                 None
                 
-            playing = False
+            playing[ctx.guild.id] = False
 
             await voice_client[ctx.guild.id].disconnect()
 
