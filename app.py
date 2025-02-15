@@ -271,7 +271,7 @@ class PlaylistSelectPlay(discord.ui.View):
                 for index, music in enumerate(playlist['music']):
                     music_query += f'{music['title']}'
                     if index+1 < len(playlist['music']):
-                        music_query =+ ', '
+                        music_query += ', '
             else:
                 music_query = playlist['music'][0]['title']
 
