@@ -276,6 +276,7 @@ class PlaylistSelectPlay(discord.ui.View):
                 music_query = playlist['music'][0]['title']
 
             q = discord.SelectOption(label=playlist['playlist_name'], description=music_query, value=str(index))
+            self.options.append(q)
 
         self.select = discord.ui.Select(placeholder='Pilh Playlist')
         self.select.callback = self.on_select
@@ -325,7 +326,7 @@ async def initialize_play_music(ctx, message, guild_id, title, url):
     loop_music_url_object[guild_id].append(obj)
 
     if not playing:
-        await message.delete()
+        #await message.delete()
         await play_music(ctx, guild_id)
         playing = True
     else:
