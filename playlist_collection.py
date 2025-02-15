@@ -1,7 +1,7 @@
 from pymongo import MongoClient
 import os
 
-CONNECTION_STRING = os.environ.get('MONGODB_CONNECTIONS_STRING')
+CONNECTION_STRING = os.environ.get('MONGODB_CONNECTION_STRING')
 
 mongoClient = MongoClient(CONNECTION_STRING)
 db = mongoClient['kureichi_music']
