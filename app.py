@@ -268,17 +268,18 @@ class PlaylistSelectPlay(discord.ui.View):
         for index, playlist in enumerate(self.playlist_list):
             music_query = ''
             if len(playlist['music']) > 1:
-                for index, music in enumerate(playlist['music']):
+                for indexs, music in enumerate(playlist['music']):
                     music_query += f'{music['title']}'
-                    if index+1 < len(playlist['music']):
+                    if indexs+1 < len(playlist['music']):
                         music_query += ', '
             else:
                 music_query = playlist['music'][0]['title']
 
-            q = discord.SelectOption(label=playlist['playlist_name'], description=music_query, value=str(index))
+            music_query_100 = music_query[:100]
+            q = discord.SelectOption(label=playlist['playlist_name'], description=music_query_100, value=str(index))
             self.options.append(q)
 
-        self.select = discord.ui.Select(placeholder='Pilh Playlist')
+        self.select = discord.ui.Select(placeholder='Pilh Playlist', options=self.options)
         self.select.callback = self.on_select
         self.add_item(self.select)
 
@@ -288,7 +289,8 @@ class PlaylistSelectPlay(discord.ui.View):
         playlist_name = self.playlist_list[int(self.select.values[0])]['playlist_name']
         music_list = playlist_collections.ListMusic(playlist_name)
 
-        message = await interact.response.send_message(content='🧿 Memproses..\n\n*Karena minimnya resource, ini bakalan memakan waktu sedikit lama. Namun tenang saja, lagu akan tetap dijalankan sambil menunggu proses selesai.*')
+        await interact.response.edit_message(content='🧿 Memproses..\n\n*Karena minimnya resource, ini bakalan memakan waktu sedikit lama. Namun tenang saja, lagu akan tetap dijalankan sambil menunggu proses selesai.*', view=None)
+        message = await interact.original_response()
 
         for music in music_list:
             title = music['title']
@@ -300,14 +302,11 @@ class PlaylistSelectPlay(discord.ui.View):
             title = result['title']
             url_stream = result['data']
 
-            await initialize_play_music(self.ctx, message, self.guild_id, title, url_stream)
-
-        
+            await initialize_play_music(self.ctx, message, self.guild_id, title, url_stream, False)
 
 
 
-
-async def initialize_play_music(ctx, message, guild_id, title, url):
+async def initialize_play_music(ctx, message, guild_id, title, url, edit=True):
     global playing
     print('Menginisialisasi Play Music')
 
@@ -326,11 +325,14 @@ async def initialize_play_music(ctx, message, guild_id, title, url):
     loop_music_url_object[guild_id].append(obj)
 
     if not playing:
-        #await message.delete()
+        await message.delete()
         await play_music(ctx, guild_id)
         playing = True
     else:
-        await message.edit(content=f'📝 **{title}** ditambah kedalam Playlist.', view=None)
+        if edit:
+            await message.edit(content=f'📝 **{title}** ditambah kedalam Playlist.', view=None)
+        else:
+            await ctx.send(content=f'📝 **{title}** ditambah kedalam Playlist.', view=None)
 
 
 async def play_music(ctx, guild_id):
@@ -470,8 +472,12 @@ async def main():
                 return
             
             message = await ctx.send('Memberhentikan Musik')
-            music_url_object.pop(ctx.guild.id)
-            loop_music_url_object.pop(ctx.guild.id)
+            try:
+                music_url_object.pop(ctx.guild.id)
+                loop_music_url_object.pop(ctx.guild.id)
+            except:
+                None
+                
             playing = False
 
             await voice_client[ctx.guild.id].disconnect()
@@ -552,13 +558,13 @@ async def main():
 
             if ctx.author.voice:
                 if ctx.voice_client == None:
-                    voice_client[guild_id] = ctx.author.voice.channel.connect()
+                    voice_client[guild_id] = await ctx.author.voice.channel.connect()
             else:
                 await ctx.send(content='Masuk voice dulu bang, gw gk tau mau join ke mana.')
                 return
             
             view = PlaylistSelectPlay(ctx, guild_id, username)
-            message = await ctx.send(content='📖 Pilih Playlist yang ingin kamu putar', view=view)
+            await ctx.send(content='📖 Pilih Playlist yang ingin kamu putar', view=view)
 
 
         @client.command()
