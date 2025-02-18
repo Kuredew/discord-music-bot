@@ -11,7 +11,7 @@ from discord.ext import commands
 
 intents = discord.Intents.default()
 intents.message_content = True
-client = commands.Bot(command_prefix=".", intents=intents)
+client = commands.Bot(command_prefix=".", intents=intents, help_command=None)
 
 def loads():
     global voice_client, music_url_object, playing, cookie, BOT_TOKEN, loop_index, loop_music_url_object, is_loop
@@ -119,7 +119,33 @@ class DeleteSelect(discord.ui.View):
         title = music_selected['title']
         url = music_selected['url']
         
-        await interaction.response.edit_message(content=f'🚮 {title} Dihapus dari playlist', view=None)
+        await interaction.response.edit_message(content=f'🚮 {title} Dihapus dari Antrean', view=None)
+
+class DeleteLoopSelect(discord.ui.View):
+    def __init__(self, guild_id):
+        super().__init__()
+
+        self.guild_id = guild_id
+
+        self.options = []
+        for index, obj in enumerate(loop_music_url_object[guild_id]):
+            title = obj['title']
+            url = obj['url']
+
+            self.options.append(discord.SelectOption(label=title[:100], description=url[:100], value=int(index)))
+
+        self.select = discord.ui.Select(placeholder='Pilih Music', options=self.options)
+        self.select.callback = self.on_select
+
+        self.add_item(self.select)
+
+    async def on_select(self, interact: discord.Interaction):
+        index_selected = int(self.select.values[0])
+        title = loop_music_url_object[self.guild_id][index_selected]['title']
+
+        loop_music_url_object[self.guild_id].pop(index_selected)
+
+        await interact.response.edit_message(content=f'🚮 {title} Dihapus dari Loop', view=None)
         
 class PlaylistSelect(discord.ui.View):
     def __init__(self, execute, username, title_song, url):
@@ -158,11 +184,11 @@ class MusicSelectRaw(discord.ui.View):
         super().__init__()
 
         self.username = username
-        self.results = YoutubeSearch(query, 5).to_dict()
+        self.results = YoutubeSearch(query, 10).to_dict()
 
         options = []
         for index, result in enumerate(self.results):
-            options.append(discord.SelectOption(label=f'{index + 1}. {result['title'][:97]}', description=result['channel'], value=str(index)))
+            options.append(discord.SelectOption(label=f'{index + 1}. {result['title']}', description=result['channel'], value=str(index)))
 
         self.select = discord.ui.Select(placeholder='Pilih Musiknya bang', options=options)
         self.select.callback = self.on_select
@@ -304,7 +330,74 @@ class PlaylistSelectPlay(discord.ui.View):
 
             await initialize_play_music(self.ctx, message, self.guild_id, title, url_stream, False)
 
+class PlaylistPlayOne(discord.ui.View):
+    def __init__(self, ctx, guild_id, username):
+        super().__init__()
 
+        self.ctx = ctx
+        self.guild_id = guild_id
+        self.username = username
+
+        self.playlist_collection = PlaylistCollection(username)
+        self.playlist_list = self.playlist_collection.ListPlaylist()
+
+        self.options = []
+        for index, playlist in enumerate(self.playlist_list):
+            music_message = ''
+            for indexs, music in enumerate(playlist['music']):
+                print(music)
+                query = music['title'] + ', '
+
+                if indexs == len(playlist['music']):
+                    query = music['title']
+
+                music_message += query
+            self.options.append(discord.SelectOption(label=playlist['playlist_name'][:100], description=music_message[:100], value=str(index)))
+
+        self.select = discord.ui.Select(placeholder='Pilih Playlist', options=self.options)
+        self.select.callback = self.on_select
+        self.add_item(self.select)
+
+    async def on_select(self, interact:discord.Interaction):
+        playlist_selected = self.playlist_list[int(self.select.values[0])]
+        music_list = self.playlist_collection.ListMusic(playlist_selected['playlist_name'])
+
+        view = MusicPlayOne(self.ctx, self.guild_id, self.username, music_list)
+
+        await interact.response.edit_message(content='🎶 Pilih Music Yang Ingin Diputar', view= view)
+
+class MusicPlayOne(discord.ui.View):
+    def __init__(self, ctx, guild_id, username, music_list):
+        super().__init__()
+
+        self.ctx = ctx
+        self.guild_id = guild_id
+        self.username = username
+        self.music_list = music_list
+
+        self.options = []
+        for index, music, in enumerate(music_list):
+            self.options.append(discord.SelectOption(label=music['title'][:100], description=music['url'][:100], value=str(index)))
+
+        self.select = discord.ui.Select(placeholder='Pilih Music', options=self.options)
+        self.select.callback = self.on_select
+        self.add_item(self.select)
+
+    async def on_select(self, interact:discord.Interaction):
+        await interact.response.edit_message(content='🧿 Memproses...', view=None)
+
+        music_obj = self.music_list[int(self.select.values[0])]
+
+        title = music_obj['title']
+        raw_url = music_obj['url']
+
+        result = await ytdlp(raw_url)
+
+        stream_url = result['data']
+
+        message = await interact.original_response()
+        await initialize_play_music(self.ctx, message, self.guild_id, title, stream_url)
+        
 
 async def initialize_play_music(ctx, message, guild_id, title, url, edit=True):
     if guild_id not in playing:
@@ -389,6 +482,13 @@ async def main():
             await client.change_presence(activity=playing_vs_code)
 
         @client.command()
+        async def help(ctx):
+            with open('command.txt', 'r', encoding='UTF-8') as f:
+                command_message = f.read()
+
+            await ctx.send(command_message)
+
+        @client.command()
         async def p(ctx, *, q):
             if ctx.author.voice:
                 if ctx.voice_client == None:
@@ -406,7 +506,7 @@ async def main():
                 message = await ctx.send('🧿 Mencari...')
 
                 search_query = q
-                result_search = YoutubeSearch(search_query, max_results=5).to_dict()
+                result_search = YoutubeSearch(search_query, max_results=10).to_dict()
 
                 view = MusicSelect(ctx, message, ctx.guild.id, result_search)
 
@@ -443,15 +543,23 @@ async def main():
         @client.command()
         async def list(ctx):
             try:
-                if len(music_url_object[ctx.guild.id]) > 0:
-                    message = 'List Playlist setelah ini.\n\n'
-                    for index, obj in enumerate(music_url_object[ctx.guild.id]):
-                        query = f'{index+1}. {obj['title']}\n'
+                if not is_loop[ctx.guild.id]:
+                    if len(music_url_object[ctx.guild.id]) > 0:
+                        message = 'List Playlist setelah ini.\n\n'
+                        for index, obj in enumerate(music_url_object[ctx.guild.id]):
+                            query = f'{index+1}. {obj['title']}\n'
+                            message += query
+
+                        await ctx.send(message)
+                    else:
+                        await ctx.send('Tidak ada lagu lagi setelah ini.')
+                else:
+                    message = '🧾 List playlist loop saat ini\n\n'
+                    for index, obj in enumerate(loop_music_url_object[ctx.guild.id]):
+                        query = f'{index + 1}. {obj['title']}\n'
                         message += query
 
                     await ctx.send(message)
-                else:
-                    await ctx.send('Tidak ada lagu lagi setelah ini.')
             except:
                 await ctx.send('Aku lagi gk muter musik saat ini.')
 
@@ -461,11 +569,15 @@ async def main():
                 await ctx.send('Harap masuk ke voice dulu.')
                 return
             
-            if len(music_url_object[ctx.guild.id]) > 0:
-                view = DeleteSelect(ctx.guild.id)
-                await ctx.send('Pilih musik dibawah ini', view=view)
+            if not is_loop[ctx.guild.id]:
+                if len(music_url_object[ctx.guild.id]) > 0:
+                    view = DeleteSelect(ctx.guild.id)
+                    await ctx.send('Pilih musik dibawah ini', view=view)
+                else:
+                    await ctx.send('Tidak ada lagu lagi setelah ini')
             else:
-                await ctx.send('Tidak ada lagu lagi setelah ini')
+                view = DeleteLoopSelect(ctx.guild.id)
+                await ctx.send(content='Pilih musik yang ingin dihapus', view=view)
 
         @client.command()
         async def stop(ctx):
@@ -492,7 +604,7 @@ async def main():
                 await message.reply('Tidak bisa menskip musik jika kamu berada diluar voice.')
 
             message = await ctx.send('Menskip Musik')
-            await voice_client[ctx.guild.id].stop()
+            voice_client[ctx.guild.id].stop()
 
         @client.command()
         async def j(ctx, *, q):
@@ -503,7 +615,7 @@ async def main():
             await ctx.send('test')
 
         @client.command()
-        async def playlistmake(ctx, *, q):
+        async def playlistnew(ctx, *, q):
             playlist_name = q
             username = ctx.author.name
 
@@ -569,6 +681,53 @@ async def main():
             
             view = PlaylistSelectPlay(ctx, guild_id, username)
             await ctx.send(content='📖 Pilih Playlist yang ingin kamu putar', view=view)
+
+        @client.command()
+        async def playlistp(ctx):
+
+            username = ctx.author.name
+            guild_id = ctx.guild.id
+
+            if ctx.author.voice:
+                if ctx.voice_client == None:
+                    voice_client[guild_id] = await ctx.author.voice.channel.connect()
+            else:
+                await ctx.send(content='Masuk voice dulu bang, gw gk tau mau join ke mana.')
+                return
+            
+            view = PlaylistSelectPlay(ctx, guild_id, username)
+            await ctx.send(content='📖 Pilih Playlist yang ingin kamu putar', view=view)
+
+        @client.command()
+        async def playlistplayone(ctx):
+            guild_id = ctx.guild.id
+            username = ctx.author.name
+
+            if ctx.author.voice:
+                if ctx.voice_client == None:
+                    voice_client[ctx.guild.id] = await ctx.author.voice.channel.connect()
+            else:
+                await ctx.send(content='Masuk voice dulu bjir')
+                return
+
+            view = PlaylistPlayOne(ctx, guild_id, username)
+
+            await ctx.send(content='📖 Pilih Playlist', view= view)
+
+        @client.command()
+        async def playlistpo(ctx):
+            guild_id = ctx.guild.id
+            username = ctx.author.name
+
+            if ctx.author.voice and ctx.voice_client == None:
+                voice_client[ctx.guild.id] = await ctx.author.voice.channel.connect()
+            else:
+                await ctx.send(content='Masuk voice dulu bjir')
+                return
+
+            view = PlaylistPlayOne(ctx, guild_id, username)
+
+            await ctx.send(content='📖 Pilih Playlist', view= view)
 
 
         @client.command()

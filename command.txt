@@ -1,0 +1,16 @@
+📝 List Command Kureichi Music
+ * **.p/play <judul/link musik>** Putar musik
+ * **.stop** Stop bot
+ * **.list** Menampilkan antrian musik
+ * **.skip** Skip lagu yang sedang dimainkan
+ * **.hapus** Hapus salah satu lagu dari antrian
+
+📝 List Command Playlist
+ * **.playlist** Tampilkan playlist kamu.
+ * **.playlistnew** Bikin playlist baru
+ * **.playlistadd <judul/link musik>** Tambah lagu ke playlist yang sudah ada
+ * **.playlistp/playlistplay** Memainkan semua musik dari playlist
+ * **.playlistpo/playlistplayone** Memainkan salah satu musik dari playlist
+
+*Special Command*
+ * **.loop** Mengubah mode antrian menjadi loop, artinya jika antrian musik sudah habis, maka bot akan memutar kembali lagu dari awal antrian.
