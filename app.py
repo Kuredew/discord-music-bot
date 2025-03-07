@@ -481,6 +481,10 @@ async def main():
             playing_vs_code = discord.Game(name='Only Fans', platform='PS5', assets=assets)
             await client.change_presence(activity=playing_vs_code)
 
+        @client.slash_command(name= "kureichi")
+        async def kureichi(ctx):
+            await ctx.respond('Kamu Berhasil berinteraksi dengan slash.')
+
         @client.command()
         async def help(ctx):
             with open('command.txt', 'r', encoding='UTF-8') as f:
